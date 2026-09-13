@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115學年度數位前導學校 - 現況診斷與策略儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(at 0% 0%, hsla(210, 100%, 97%, 1) 0px, transparent 50%),
+                              radial-gradient(at 100% 0%, hsla(210, 50%, 95%, 1) 0px, transparent 50%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        /* CSS Variables for Dynamic Theming */
+        :root {
+            --theme-color: #f59e0b; /* Default Amber */
+            --theme-color-light: #fef3c7;
+            --theme-color-dark: #d97706;
+        }
+
+        .theme-bg { background-color: var(--theme-color) !important; }
+        .theme-bg-light { background-color: var(--theme-color-light) !important; }
+        .theme-border { border-color: var(--theme-color) !important; }
+        .theme-text { color: var(--theme-color) !important; }
+        .theme-ring { ring-color: var(--theme-color) !important; }
+
+        /* =========================================
+           翻牌卡核心 CSS 架構 (嚴格依據使用者指定)
+           ========================================= */
+        .flip-card {
+            perspective: 1200px;
+            height: 250px;
+            cursor: pointer;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform .55s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            overflow-y: auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        .flip-back {
+            transform: rotateY(180deg);
+            border-color: var(--theme-color);
+        }
+
+        /* 翻牌卡內層的自訂卷軸，讓長內容好滑動 */
+        .flip-face::-webkit-scrollbar { width: 4px; }
+        .flip-face::-webkit-scrollbar-track { background: transparent; }
+        .flip-face::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+        /* 彈窗(Modal)卷軸 */
+        .modal-scroll::-webkit-scrollbar { width: 8px; }
+        .modal-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* 動畫 */
+        .fade-enter { animation: fadeEnter 0.4s ease-out forwards; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .pill-active { transition: all 0.3s; transform: scale(1.05); }
+
+        @keyframes fadeEnter { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 時間軸線 */
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            bottom: -24px;
+            left: 1.5rem;
+            width: 2px;
+            background-color: #cbd5e1;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-20">
+
+    <!-- Header & Tabs -->
+    <header class="w-full bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 mb-8 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-2">115學年度數位前導學校</h1>
+                <p class="text-slate-500 font-medium text-lg">現況診斷與好方法工具箱・五情境動態儀表板</p>
+            </div>
+            <!-- Pill Tabs Container -->
+            <div class="flex flex-wrap justify-center gap-2 md:gap-4" id="tabs-container"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto px-4 relative transition-opacity duration-300" id="main-content">
+        
+        <!-- Section 1: 現狀診斷 -->
+        <section class="mb-14 relative" id="section-1">
+            <div class="flex items-center gap-4 mb-6 relative z-10">
+                <div class="w-12 h-12 rounded-full theme-bg text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 transition-colors duration-300">1</div>
+                <h2 class="text-2xl font-bold text-slate-800">現況診斷與挑戰</h2>
+                <div class="flex-grow h-px bg-slate-200"></div>
+            </div>
+            <div class="timeline-line absolute left-0 top-0 h-full w-full pointer-events-none hidden md:block"></div>
+            
+            <div class="pl-0 md:pl-16">
+                <p class="text-slate-500 mb-6 font-medium text-sm">點擊卡片翻轉查看金句詳情（資料來源：五情境現狀診斷總表）</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="problems-grid">
+                    <!-- JS Generated Problem Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: 對應解方 -->
+        <section class="mb-14 relative" id="section-2">
+            <div class="flex items-center gap-4 mb-6 relative z-10">
+                <div class="w-12 h-12 rounded-full theme-bg text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 transition-colors duration-300">2</div>
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center flex-wrap gap-2">
+                    對應的好方法
+                    <span class="text-[11px] md:text-xs font-normal bg-orange-50 text-orange-600 px-2.5 py-1 rounded-md border border-orange-200 shadow-sm">
+                        💡 註：配對邏輯為AI依語意判斷
+                    </span>
+                </h2>
+                <div class="flex-grow h-px bg-slate-200"></div>
+            </div>
+            <div class="timeline-line absolute left-0 top-0 h-full w-full pointer-events-none hidden md:block"></div>
+            
+            <div class="pl-0 md:pl-16">
+                <p class="text-slate-500 mb-6 font-medium text-sm">針對上方困境，於工具箱總表中尋找之對應解方</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="solutions-grid">
+                    <!-- JS Generated Solution Cards -->
+                </div>
+
+                <!-- Unmatched Solutions -->
+                <div id="unmatched-solutions-container" class="mt-8 hidden">
+                    <h3 class="text-base font-bold text-slate-500 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        其他好方法 (無直接對應上述單一痛點)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="unmatched-solutions-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: 行動調整建議 (Accordions) -->
+        <section class="mb-14 relative" id="section-3">
+            <div class="flex items-center gap-4 mb-6 relative z-10">
+                <div class="w-12 h-12 rounded-full theme-bg text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 transition-colors duration-300">3</div>
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center flex-wrap gap-2">
+                    行動調整建議
+                    <span class="text-[11px] md:text-xs font-normal bg-orange-50 text-orange-600 px-2.5 py-1 rounded-md border border-orange-200 shadow-sm">
+                        💡 註：此為AI依據表A/B綜合推論
+                    </span>
+                </h2>
+                <div class="flex-grow h-px bg-slate-200"></div>
+            </div>
+            <div class="timeline-line absolute left-0 top-0 h-full w-full pointer-events-none hidden md:block" style="bottom: 50%;"></div>
+            
+            <div class="pl-0 md:pl-16">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="actions-grid">
+                    <!-- JS Generated Accordions -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: 預期成果 -->
+        <section class="relative mb-20" id="section-4">
+            <div class="flex items-center gap-4 mb-6 relative z-10">
+                <div class="w-12 h-12 rounded-full theme-bg text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 transition-colors duration-300">4</div>
+                <h2 class="text-2xl font-bold text-slate-800">總結預期效益</h2>
+                <div class="flex-grow h-px bg-slate-200"></div>
+            </div>
+            
+            <div class="pl-0 md:pl-16">
+                <div class="theme-bg-light border-2 theme-border rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden transition-all duration-300 slide-up delay-300">
+                    <div class="absolute top-0 right-0 p-4 opacity-[0.08] pointer-events-none">
+                        <svg class="w-32 h-32 theme-text" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10 flex flex-col md:flex-row items-start gap-4 md:gap-6">
+                        <div class="text-5xl shrink-0 drop-shadow-md">🎯</div>
+                        <div>
+                            <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-3 flex items-center flex-wrap gap-2 leading-tight">
+                                落實調整後可能達成的狀態
+                                <span class="text-[11px] font-normal bg-white/60 text-slate-600 px-2 py-1 rounded shadow-sm border border-slate-200 mt-1 sm:mt-0">
+                                    (此為AI依據上方分析推論之預期效益，非原文引用)
+                                </span>
+                            </h3>
+                            <p class="text-base md:text-lg text-slate-800 leading-relaxed font-medium" id="outcome-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 獨立的 Modal 遮罩層 (絕對不要跟卡片結構混在一起) -->
+    <div id="data-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 sm:p-6 opacity-0 transition-opacity duration-300">
+        <!-- 半透明黑底 -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modal-backdrop"></div>
+        
+        <!-- 白底彈窗本體 -->
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col relative z-10 transform scale-95 transition-transform duration-300" id="modal-content-box">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between p-5 md:p-6 border-b border-slate-100 shrink-0">
+                <h3 class="text-xl md:text-2xl font-bold text-slate-800 pr-8 leading-tight" id="modal-title">標題</h3>
+                <button id="modal-close-btn" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition-colors bg-slate-100 hover:bg-slate-200 rounded-full p-1.5 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Body (可捲動區塊) -->
+            <div class="p-5 md:p-6 overflow-y-auto modal-scroll flex-grow">
+                <!-- Tags -->
+                <div class="mb-5 flex flex-wrap gap-2" id="modal-tags"></div>
+                <!-- Quotes -->
+                <div class="space-y-3">
+                    <h4 class="text-sm font-bold text-slate-500 mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                        原文引用金句
+                    </h4>
+                    <div id="modal-quotes" class="space-y-3"></div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-4 bg-slate-50 rounded-b-2xl border-t border-slate-100 text-right shrink-0">
+                <button id="modal-close-footer-btn" class="px-6 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-100 shadow-sm transition-colors focus:outline-none">
+                    關閉視窗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data & Application Logic -->
+    <script>
+        const ALL_COMMON_PROBLEMS = '1. 頻寬與硬體維護人力不足；2. 工具與備課負擔不減反增；3. 親師溝通與家長不信任。';
+        
+        // 嚴格依照提供的文字建立資料結構
+        const scenariosData = {
+            'A': {
+                id: 'A', name: '情境 A【火車頭拉不動】', label: '行政強／教師弱',
+                colors: { main: '#f59e0b', light: '#fef3c7', dark: '#d97706', tw: 'amber' },
+                problems: [
+                    { id: 'A-P1', title: '設備閒置與行政應付', icon: '📦', isAI: false, freqLabel: '核心傳統困境', quotes: ['買設備沒人會用放過期；行政要求教案應付文化；資訊組單打獨鬥吃不消。'] },
+                    { id: 'A-P2', title: '教師畏懼新工具與AI', icon: '😨', isAI: true, freqLabel: 'AI新興影響', quotes: ['老師畏懼新工具與 AI，怕不會用被學生笑。'] },
+                    { id: 'A-P3', title: '缺乏教學轉化機制', icon: '⚙️', isAI: false, freqLabel: 'α軸線狀況', quotes: ['α 軸線建置完成，但缺乏教學轉化機制。', 'A/C 瓶頸在「起步與心理障礙」'] },
+                    { id: 'A-P4', title: '全場共通痛點', icon: '🔥', isAI: false, freqLabel: '共通痛點', quotes: [ALL_COMMON_PROBLEMS] }
+                ],
+                solutions: [
+                    { id: 'A-S1', title: '建置常見問題QA免求救手冊', type: '行政流程與資源整合', feas: '屬校內可自主推動，門檻低', icon: '📘', matchPId: 'A-P1', quotes: ['建置常見問題 QA 免求救手冊'] },
+                    { id: 'A-S2', title: '微分享與種子示範', type: '教師增能與社群共備', feas: '屬校內可自主推動，門檻低', icon: '🤝', matchPId: 'A-P2', quotes: ['15分鐘微分享、同儕伴學、3~5人種子示範、免責試用期'] },
+                    { id: 'A-S3', title: '先分享個人AI紅利', type: '學生學習與自主性 / AI', feas: '屬校內可自主推動，門檻低', icon: '🎁', matchPId: 'A-P2', quotes: ['[AI] 先分享行政/個人 AI 紅利有感，再談教學'] }
+                ],
+                actions: {
+                    add: [{ text: '補足後續深化與教學轉化的機制', source: '依情境A金句：缺乏教學轉化機制' }],
+                    adjust: [],
+                    less: [{ text: '減少單打獨鬥與單純應付文化', source: '依情境A金句：行政要求教案應付文化；資訊組單打獨鬥吃不消' }, { text: '降低工具引入速度，減輕備課負擔', source: '依共通金句：工具與備課負擔不減反增' }],
+                    more: [{ text: '落實免責試用期與微分享伴學', source: '依情境A金句：15分鐘微分享、同儕伴學、3~5人種子示範、免責試用期' }]
+                },
+                outcome: '透過建立免求救指南降低硬體操作門檻，並以「體驗個人AI紅利」與「同儕伴學微分享」化解教師對新科技怕被笑的心理恐懼，進而打破「行政熱、教師冷」的僵局，促成校內自主起步的動能，克服初期的心理障礙。'
+            },
+            'B': {
+                id: 'B', name: '情境 B【孤勇型】', label: '教師強／行政弱',
+                colors: { main: '#4f46e5', light: '#e0e7ff', dark: '#3730a3', tw: 'indigo' },
+                problems: [
+                    { id: 'B-P1', title: '基建卡關與同儕孤立', icon: '🏝️', isAI: false, freqLabel: '核心傳統困境', quotes: ['網路卡、載具轉圈圈退回實體；一線熱情教師被當宣傳包裝且遭同儕孤立。', 'B 瓶頸在「行政與基建卡關」', '與 α 軸線（基建）嚴重脫節；急需 γ-3 共享支持。'] },
+                    { id: 'B-P2', title: '評量真偽難辨', icon: '🕵️', isAI: true, freqLabel: 'AI新興影響', quotes: ['評量真偽難辨：學生靠 AI 交作業，極難抓出與辨修。'] },
+                    { id: 'B-P3', title: '全場共通痛點', icon: '🔥', isAI: false, freqLabel: '共通痛點', quotes: [ALL_COMMON_PROBLEMS] }
+                ],
+                solutions: [
+                    { id: 'B-S1', title: 'QR自動化與SOP化', type: '行政流程與資源整合', feas: '需要行政端配合自動化工具落地', icon: '🤖', matchPId: 'B-P1', quotes: ['平板車 QR 自動化、操作 SOP 化、科技需求會議'] },
+                    { id: 'B-S2', title: '課程模組與Mini社群', type: '教師增能與社群共備', feas: '需要行政端配合自動化工具落地', icon: '🧩', matchPId: 'B-P1', quotes: ['課程模組化方便申經費、鼓勵起步者組 Mini 社群'] },
+                    { id: 'B-S3', title: '訂定AI透明度規範', type: '學生學習與自主性 / AI', feas: '需要行政端配合自動化工具落地', icon: '⚖️', matchPId: 'B-P2', quotes: ['[AI] 訂定 AI 使用透明度規範，作業註記 AI 比例'] }
+                ],
+                actions: {
+                    add: [{ text: '需實質經費解決網路與載具問題，不能僅靠SOP', source: '依情境B金句：網路卡、載具轉圈圈退回實體；急需 γ-3 共享支持' }],
+                    adjust: [{ text: '確保「科技需求會議」能實質運作並獲得行政端配合', source: '依可行性條件：需要行政端配合自動化工具落地' }],
+                    less: [{ text: '停止將一線熱情教師當作宣傳包裝', source: '依情境B金句：一線熱情教師被當宣傳包裝且遭同儕孤立' }],
+                    more: [{ text: '推動作業註記AI比例', source: '依情境B金句：作業註記 AI 比例' }]
+                },
+                outcome: '藉由行政端的 SOP 自動化與定期科技需求會議，逐步排除基建卡關問題；同時透過 Mini 社群打破熱血教師的孤島效應，並以透明規範解決 AI 代寫作業疑慮，讓孤勇教師能獲得體系的實質共享支持。'
+            },
+            'C': {
+                id: 'C', name: '情境 C【無米之炊型】', label: '行政弱／教師弱',
+                colors: { main: '#475569', light: '#f1f5f9', dark: '#334155', tw: 'slate' },
+                problems: [
+                    { id: 'C-P1', title: '資源匱乏與數位落差', icon: '🏜️', isAI: false, freqLabel: '核心傳統困境', quotes: ['偏鄉斷網連 LMS 都進不去；充電車拿取極耗時；欠缺資訊同仁。', 'α 軸線完全未達標，城鄉數位落差極大。', 'A/C 瓶頸在「起步與心理障礙」'] },
+                    { id: 'C-P2', title: '家長溝通受阻', icon: '📵', isAI: true, freqLabel: 'AI新興影響', quotes: ['家長誤以為數位作業是在玩遊戲，溝通受阻。'] },
+                    { id: 'C-P3', title: '全場共通痛點', icon: '🔥', isAI: false, freqLabel: '共通痛點', quotes: [ALL_COMMON_PROBLEMS] }
+                ],
+                solutions: [
+                    { id: 'C-S1', title: '引進免費平台與募載具', type: '行政流程與資源整合', feas: '極度依賴外部資源與跨校結盟', icon: '🎁', matchPId: 'C-P1', quotes: ['引進教育部/縣市免費平台、社區/家長會募載具'] },
+                    { id: 'C-S2', title: '單班單科起步與跨校結盟', type: '教師增能與社群共備', feas: '極度依賴外部資源與跨校結盟', icon: '🌱', matchPId: 'C-P1', quotes: ['單班單科起步、跨校結盟複製教案、種子教師案例分享'] },
+                    { id: 'C-S3', title: '善用免費AI建立信心', type: '學生學習與自主性 / AI', feas: '極度依賴外部資源與跨校結盟', icon: '🎤', matchPId: 'C-P1', quotes: ['[AI] 善用免費 AI 工具（如語音轉文字）建立信心'] }
+                ],
+                actions: {
+                    add: [{ text: '針對「家長誤以為在玩遊戲」設計具體親師溝通方案', source: '依情境C金句：家長誤以為數位作業是在玩遊戲' }],
+                    adjust: [{ text: '建立穩定的外部資源爭取管道', source: '依可行性條件：極度依賴外部資源與跨校結盟' }],
+                    less: [{ text: '避免全校同時全面推動造成挫敗', source: '依情境C金句：單班單科起步' }],
+                    more: [{ text: '積極跨校結盟複製現成教案', source: '依情境C金句：跨校結盟複製教案' }]
+                },
+                outcome: '藉由積極引進外部免費平台與社區資源，從單班單科與免費 AI 語音工具「小步快跑」建立師生信心，逐步克服極度匱乏的城鄉硬體落差，點燃偏鄉校內數位轉型的第一把火，跨越起步心理障礙。'
+            },
+            'D': {
+                id: 'D', name: '情境 D【強強聯手型】', label: '行政強／教師強',
+                colors: { main: '#059669', light: '#d1fae5', dark: '#047857', tw: 'emerald' },
+                problems: [
+                    { id: 'D-P1', title: '數據包袱與工具疲勞', icon: '📊', isAI: false, freqLabel: '核心傳統困境', quotes: ['LMS 數據齊備但無時間分析（好看無用）；數位工具越多，備課頭越痛。', 'γ-2 數據治理未能發揮「行政減載」，變成數據包袱。', 'D/E 瓶頸則已轉移至「數據無力分析、認知卸載與疲勞」。'] },
+                    { id: 'D-P2', title: '認知外包與人際弱化', icon: '🤖', isAI: true, freqLabel: 'AI新興影響', quotes: ['學生認知外包：過度問 AI 缺乏先思考，成績退步；人際交流變弱；資安顧慮。'] },
+                    { id: 'D-P3', title: '全場共通痛點', icon: '🔥', isAI: false, freqLabel: '共通痛點', quotes: [ALL_COMMON_PROBLEMS] }
+                ],
+                solutions: [
+                    { id: 'D-S1', title: '汰除低效工具與班親會溝通', type: '行政流程與資源整合', feas: '需具備高度數據與教學共備成熟度', icon: '🗑️', matchPId: 'D-P1', quotes: ['定期檢視並汰除效益低工具、班親會溝通建立信任'] },
+                    { id: 'D-S2', title: '設計思考歷程可視化', type: '教師增能與社群共備', feas: '需具備高度數據與教學共備成熟度', icon: '🧠', matchPId: 'D-P2', quotes: ['社群共備設計「思考歷程可視化」作業'] },
+                    { id: 'D-S3', title: '數據預警與無科技日', type: '學生學習與自主性 / AI', feas: '需具備高度數據與教學共備成熟度', icon: '🛑', matchPId: 'D-P2', quotes: ['[AI/數據] LMS 數據預警落後學生；安排無科技日；建立親師生數據規範'] }
+                ],
+                actions: {
+                    add: [{ text: '需更自動化的分析或專職人員協助萃取數據價值', source: '依情境D金句：LMS 數據齊備但無時間分析' }],
+                    adjust: [{ text: '確保親師生數據規範能實際落地', source: '依可行性條件：需具備高度數據與教學共備成熟度' }],
+                    less: [{ text: '堅決汰除效益低的數位工具', source: '依情境D金句：定期檢視並汰除效益低工具' }, { text: '減少學生過度依賴AI發問，防範認知外包', source: '依情境D金句：過度問 AI 缺乏先思考' }],
+                    more: [{ text: '落實「思考歷程可視化」作業', source: '依情境D金句：設計「思考歷程可視化」作業' }, { text: '確實執行「無科技日」', source: '依情境D金句：安排無科技日' }]
+                },
+                outcome: '透過「減法思維」汰除無效工具並設立無科技日，結合「思考歷程可視化」作業設計，能有效攔截學生認知外包的問題；同時善用班親會溝通信任，將龐雜的數據包袱轉化為精準預警落後學生的助力，解決師生雙方的科技疲勞。'
+            },
+            'E': {
+                id: 'E', name: '情境 E【轉型高峰型】', label: '行政 S+／教師 S+',
+                colors: { main: '#9333ea', light: '#f3e8ff', dark: '#7e22ce', tw: 'purple' },
+                problems: [
+                    { id: 'E-P1', title: '面臨天花板與經費壓力', icon: '🏔️', isAI: false, freqLabel: '核心傳統困境', quotes: ['流程自動化後「得了頂」，指南無下一階段指引；載具淘汰續航經費壓力。', 'α／γ 軸線已全數達成，現行指南指標面臨天花板。'] },
+                    { id: 'E-P2', title: '創新倦怠與實體互動排擠', icon: '🔋', isAI: true, freqLabel: 'AI新興影響', quotes: ['資訊疲勞：團隊長期創新陷入倦怠；線上學習排擠真人實體互動。', 'D/E 瓶頸則已轉移至「數據無力分析、認知卸載與疲勞」。'] },
+                    { id: 'E-P3', title: '全場共通痛點', icon: '🔥', isAI: false, freqLabel: '共通痛點', quotes: [ALL_COMMON_PROBLEMS] }
+                ],
+                solutions: [
+                    { id: 'E-S1', title: '維護外包與成果輸出', type: '行政流程與資源整合', feas: '屬於永續文化建構，需充足經費與制度支持', icon: '📤', matchPId: 'E-P1', quotes: ['系統維護輪值/外包制、自動化成果範本化輸出他校'] },
+                    { id: 'E-S2', title: '創新回饋與參與政策建議', type: '教師增能與社群共備', feas: '屬於永續文化建構，需充足經費與制度支持', icon: '💡', matchPId: 'E-P1', quotes: ['設計教師創新回饋機制、參與指南指標政策建議'] },
+                    { id: 'E-S3', title: '共同決策與保留實體活動', type: '學生學習與自主性 / AI', feas: '屬於永續文化建構，需充足經費與制度支持', icon: '🏕️', matchPId: 'E-P2', quotes: ['[AI/文化] 邀請教師參與 AI 系統共同決策；保留實體跨校社交活動'] }
+                ],
+                actions: {
+                    add: [{ text: '建構長期的企業贊助或專案經費爭取管道', source: '依情境E金句：載具淘汰續航經費壓力' }],
+                    adjust: [{ text: '檢視創新回饋機制是否具備實質激勵效果', source: '依可行性條件：需充足經費與制度支持' }],
+                    less: [{ text: '避免無止盡追求新工具，防範團隊過度疲勞', source: '依情境E金句：團隊長期創新陷入倦怠' }],
+                    more: [{ text: '舉辦實體跨校社交活動，彌補線上排擠', source: '依情境E金句：保留實體跨校社交活動' }, { text: '將成果範本化輸出帶動他校', source: '依情境E金句：自動化成果範本化輸出他校' }]
+                },
+                outcome: '藉由制度化的實質創新回饋、維護外包與參與政策指標制定，讓疲憊的領頭團隊獲得永續動能，突破現有天花板；並透過刻意保留實體社交平衡線上學習，成功從「自我成長階段」邁向「引領並輸出成果給他校」的生態系建立者。'
+            }
+        };
+
+        let currentScenarioId = 'A';
+
+
+        function applyTheme(colors) {
+            document.documentElement.style.setProperty('--theme-color', colors.main);
+            document.documentElement.style.setProperty('--theme-color-light', colors.light);
+            document.documentElement.style.setProperty('--theme-color-dark', colors.dark);
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            
+            Object.values(scenariosData).forEach(scenario => {
+                const btn = document.createElement('button');
+                const isActive = scenario.id === currentScenarioId;
+                
+                btn.className = `px-5 py-2.5 rounded-full font-bold text-sm md:text-base border-2 relative overflow-hidden flex flex-col items-center justify-center gap-0.5 transition-all duration-300 focus:outline-none ${
+                    isActive 
+                    ? `text-white shadow-md pill-active` 
+                    : `bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700`
+                }`;
+                
+                // 動態套用顏色 (避免 Tailwind class 在 runtime 失效)
+                if(isActive) {
+                    btn.style.backgroundColor = scenario.colors.main;
+                    btn.style.borderColor = scenario.colors.main;
+                } else {
+                    btn.style.backgroundColor = '';
+                    btn.style.borderColor = '';
+                }
+                
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-slate-100'} flex items-center justify-center text-[10px]">${scenario.id}</span>
+                        <span>${scenario.name.replace('情境 '+scenario.id, '').replace('【','').replace('】','')}</span>
+                    </div>
+                `;
+                
+                btn.onclick = () => switchScenario(scenario.id);
+                container.appendChild(btn);
+            });
+        }
+
+
+        function getHTMLForFlipCard(frontHTML, backHTML, dataStr) {
+            // 嚴格遵守 CSS 架構，不加上任何會破壞 position 的 class
+            return `
+                <div class="flip-card-inner">
+                    <div class="flip-face p-5 flex flex-col justify-center items-center text-center group-hover:shadow-xl transition-shadow">
+                        ${frontHTML}
+                        <div class="mt-auto pt-3 text-[11px] text-slate-400 flex items-center gap-1 opacity-70">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                            點擊翻轉看金句
+                        </div>
+                    </div>
+                    <div class="flip-face flip-back p-5 flex flex-col">
+                        <div class="flex-grow text-sm text-slate-700 font-medium leading-relaxed relative">
+                            ${backHTML}
+                            <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                        </div>
+                        <button type="button" class="mt-3 w-full py-2 rounded-lg theme-bg-light theme-text font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200" onclick="openModalProxy(event, '${dataStr}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            放大閱讀
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createProblemCard(p, scenario) {
+            const el = document.createElement('div');
+            el.className = 'flip-card group slide-up';
+            
+            let badge = p.isAI 
+                ? `<div class="absolute top-3 right-3 flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-100 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>AI 新興影響</div>` 
+                : '';
+
+            const front = `
+                ${badge}
+                <div class="text-4xl mb-3 mt-4 transform transition-transform group-hover:scale-110 drop-shadow-sm">${p.icon}</div>
+                <h3 class="text-lg font-bold text-slate-800 leading-snug px-2">${p.title}</h3>
+                <div class="mt-3 bg-slate-50 px-3 py-1 rounded-full text-[11px] font-bold text-slate-500 border border-slate-100">${p.freqLabel}</div>
+            `;
+            
+            const backQuotes = p.quotes.map(q => `<p class="pl-2 border-l-[3px] theme-border line-clamp-3 mb-2 text-left text-[13px]">「${q}」</p>`).join('');
+            const back = `
+                <div class="text-[11px] font-bold text-slate-400 mb-2 border-b border-slate-100 pb-1 text-left">來自情境 ${scenario.id} 診斷表</div>
+                ${backQuotes}
+            `;
+
+            // Data for modal
+            const modalData = {
+                title: `[面向] ${p.title}`,
+                tags: [ { text: p.freqLabel, type: 'gray' }, ...(p.isAI ? [{ text: 'AI 新興影響', type: 'orange' }] : []) ],
+                quotes: p.quotes.map(q => ({ text: q, source: `情境 ${scenario.id} 現況診斷總表` }))
+            };
+
+            // base64 encode data to pass via string attribute
+            const dataStr = btoa(encodeURIComponent(JSON.stringify(modalData)));
+            
+            el.innerHTML = getHTMLForFlipCard(front, back, dataStr);
+            
+            // Toggle flipped state (only on the outer container)
+            el.addEventListener('click', () => { el.classList.toggle('flipped'); });
+            
+            return el;
+        }
+
+        function renderSections(scenario) {
+            // Section 1
+            const pGrid = document.getElementById('problems-grid');
+            pGrid.innerHTML = '';
+            scenario.problems.forEach((p, i) => {
+                const card = createProblemCard(p, scenario);
+                card.style.animationDelay = `${i * 0.1}s`;
+                pGrid.appendChild(card);
+            });
+
+            // Section 2
+            const sGrid = document.getElementById('solutions-grid');
+            const unmatchedContainer = document.getElementById('unmatched-solutions-container');
+            const unmatchedGrid = document.getElementById('unmatched-solutions-grid');
+            sGrid.innerHTML = '';
+            unmatchedGrid.innerHTML = '';
+            
+            let matchedIds = [];
+
+            scenario.problems.forEach((p, i) => {
+                const s = scenario.solutions.find(sol => sol.matchPId === p.id);
+                if (s) {
+                    matchedIds.push(s.id);
+                    const el = document.createElement('div');
+                    el.className = 'flip-card group slide-up';
+                    el.style.animationDelay = `${(i+1) * 0.1}s`;
+
+                    const front = `
+                        <div class="absolute top-0 left-0 w-full bg-slate-50 border-b border-slate-100 py-1.5 rounded-t-2xl text-[10px] md:text-[11px] font-bold text-slate-500 flex items-center justify-center gap-1 shrink-0">
+                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            對應：${p.title}
+                        </div>
+                        <div class="text-4xl mb-2 mt-6 transform transition-transform group-hover:scale-110 drop-shadow-sm">${s.icon}</div>
+                        <h3 class="text-base font-bold text-slate-800 leading-snug px-1 mb-2">${s.title}</h3>
+                        <div class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">${s.type}</div>
+                    `;
+                    
+                    const backQuotes = s.quotes.map(q => `<p class="pl-2 border-l-[3px] theme-border line-clamp-3 mb-2 text-left text-[13px]">「${q}」</p>`).join('');
+                    const back = `
+                        <div class="text-[11px] font-bold text-slate-400 mb-2 border-b border-slate-100 pb-1 text-left">好方法工具箱原文</div>
+                        ${backQuotes}
+                        <div class="mt-2 text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100 text-left">
+                            <span class="font-bold">可行性：</span>${s.feas}
+                        </div>
+                    `;
+
+                    const modalData = {
+                        title: `[解方] ${s.title}`,
+                        tags: [ { text: `對應痛點: ${p.title}`, type: 'theme' }, { text: s.type, type: 'gray' }, { text: `可行性: ${s.feas}`, type: 'gray' } ],
+                        quotes: s.quotes.map(q => ({ text: q, source: `好方法工具箱總表` }))
+                    };
+
+                    const dataStr = btoa(encodeURIComponent(JSON.stringify(modalData)));
+                    el.innerHTML = getHTMLForFlipCard(front, back, dataStr);
+                    el.addEventListener('click', () => { el.classList.toggle('flipped'); });
+                    sGrid.appendChild(el);
+                } else {
+                    // 空缺卡片
+                    const el = document.createElement('div');
+                    el.className = 'h-[250px] border-2 border-dashed border-slate-300 bg-slate-50/50 rounded-2xl flex flex-col items-center justify-center p-6 text-center slide-up';
+                    el.style.animationDelay = `${(i+1) * 0.1}s`;
+                    el.innerHTML = `
+                        <div class="text-slate-300 mb-3"><svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></div>
+                        <h4 class="text-sm font-bold text-slate-500 mb-1">面向：${p.title}</h4>
+                        <p class="text-[11px] text-slate-400">目前於B表尚未看到直接對應此項痛點的好方法。</p>
+                    `;
+                    sGrid.appendChild(el);
+                }
+            });
+
+            // Unmatched Solutions
+            const unmatchedSols = scenario.solutions.filter(s => !matchedIds.includes(s.id));
+            if(unmatchedSols.length > 0) {
+                unmatchedContainer.classList.remove('hidden');
+                unmatchedSols.forEach(s => {
+                    const el = document.createElement('div');
+                    el.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-start gap-3';
+                    el.innerHTML = `
+                        <div class="text-3xl bg-slate-50 p-2 rounded-lg border border-slate-100">${s.icon}</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">${s.title}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2">「${s.quotes[0]}」</p>
+                        </div>
+                    `;
+                    unmatchedGrid.appendChild(el);
+                });
+            } else {
+                unmatchedContainer.classList.add('hidden');
+            }
+
+            // Section 3: Actions
+            const aGrid = document.getElementById('actions-grid');
+            aGrid.innerHTML = '';
+            
+            const actionConfigs = [
+                { key: 'add', title: '🆕 增加什麼 (Add)', bg: 'bg-blue-50/60', border: 'border-blue-100', text: 'text-blue-900', hover: 'hover:bg-blue-100/50' },
+                { key: 'adjust', title: '🔧 調整什麼 (Adjust)', bg: 'bg-amber-50/60', border: 'border-amber-100', text: 'text-amber-900', hover: 'hover:bg-amber-100/50' },
+                { key: 'less', title: '➖ 少做什麼 (Less)', bg: 'bg-rose-50/60', border: 'border-rose-100', text: 'text-rose-900', hover: 'hover:bg-rose-100/50' },
+                { key: 'more', title: '➕ 多做什麼 (More)', bg: 'bg-emerald-50/60', border: 'border-emerald-100', text: 'text-emerald-900', hover: 'hover:bg-emerald-100/50' }
+            ];
+
+            actionConfigs.forEach((conf, i) => {
+                const items = scenario.actions[conf.key];
+                const el = document.createElement('div');
+                el.className = `${conf.bg} border ${conf.border} rounded-2xl overflow-hidden slide-up`;
+                el.style.animationDelay = `${i * 0.15}s`;
+                
+                let contentHTML = items.length === 0 
+                    ? `<div class="p-5 text-sm text-slate-400 italic text-center">此類別目前證據不足</div>`
+                    : `<ul class="p-5 pt-1 space-y-4">
+                        ${items.map(item => `
+                            <li class="flex items-start gap-2.5">
+                                <svg class="w-4 h-4 mt-0.5 shrink-0 ${conf.text} opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <div>
+                                    <p class="text-sm md:text-[15px] font-bold ${conf.text} leading-snug">${item.text}</p>
+                                    <p class="text-[11px] text-slate-500 mt-1 opacity-90">(${item.source})</p>
+                                </div>
+                            </li>
+                        `).join('')}
+                       </ul>`;
+
+                el.innerHTML = `
+                    <button class="w-full p-5 flex items-center justify-between focus:outline-none text-left ${conf.hover} transition-colors" onclick="toggleAccordion(this)">
+                        <h3 class="font-bold text-base md:text-lg ${conf.text} flex items-center gap-2">
+                            ${conf.title}
+                            <span class="text-xs bg-white/70 px-2 py-0.5 rounded-full shadow-sm">${items.length}</span>
+                        </h3>
+                        <svg class="w-5 h-5 arrow transition-transform duration-300 ${conf.text} opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="content-panel hidden border-t ${conf.border}">
+                        ${contentHTML}
+                    </div>
+                `;
+                aGrid.appendChild(el);
+            });
+
+            // Section 4: Outcome
+            const outText = document.getElementById('outcome-text');
+            // 讓文字有重新載入的感覺
+            outText.style.opacity = 0;
+            setTimeout(() => {
+                outText.textContent = scenario.outcome;
+                outText.style.opacity = 1;
+                outText.style.transition = 'opacity 0.5s ease-in';
+            }, 50);
+        }
+
+
+        function switchScenario(id) {
+            if (id === currentScenarioId && document.getElementById('problems-grid').children.length > 0) return;
+            currentScenarioId = id;
+            const scenario = scenariosData[id];
+            
+            applyTheme(scenario.colors);
+            renderTabs();
+            
+            const main = document.getElementById('main-content');
+            main.classList.remove('fade-enter');
+            void main.offsetWidth; // trigger reflow
+            main.classList.add('fade-enter');
+            
+            renderSections(scenario);
+        }
+
+        function toggleAccordion(btn) {
+            const panel = btn.nextElementSibling;
+            const arrow = btn.querySelector('.arrow');
+            panel.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        }
+
+        // 獨立於卡片定位的 Modal 代理函式
+        window.openModalProxy = function(event, dataStr) {
+            event.stopPropagation(); // 阻止卡片翻轉
+            try {
+                const data = JSON.parse(decodeURIComponent(atob(dataStr)));
+                openModal(data);
+            } catch(e) {
+                console.error("Failed to parse modal data", e);
+            }
+        };
+
+        function openModal(data) {
+            document.getElementById('modal-title').textContent = data.title;
+            
+            // Tags
+            const tagsCont = document.getElementById('modal-tags');
+            tagsCont.innerHTML = data.tags.map(tag => {
+                let cls = 'px-3 py-1 rounded-full text-[11px] md:text-xs font-bold border ';
+                if(tag.type === 'theme') cls += 'theme-bg-light theme-text theme-border';
+                else if (tag.type === 'orange') cls += 'bg-orange-50 text-orange-600 border-orange-200';
+                else cls += 'bg-slate-100 text-slate-600 border-slate-200';
+                return `<span class="${cls}">${tag.text}</span>`;
+            }).join('');
+
+            // Quotes
+            const quotesCont = document.getElementById('modal-quotes');
+            quotesCont.innerHTML = data.quotes.map(q => `
+                <div class="bg-slate-50/80 p-4 md:p-5 rounded-xl border border-slate-200 relative">
+                    <svg class="w-6 h-6 text-slate-200 absolute top-3 left-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"></path></svg>
+                    <p class="text-slate-700 text-[15px] md:text-base leading-relaxed relative z-10 pl-6 font-medium">「${q.text}」</p>
+                    <p class="text-right text-[11px] text-slate-400 mt-3 font-bold">— 來源：${q.source}</p>
+                </div>
+            `).join('');
+
+            const modal = document.getElementById('data-modal');
+            const box = document.getElementById('modal-content-box');
+            
+            // 顯示邏輯
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // 強制重繪確保動畫觸發
+            void modal.offsetWidth;
+            
+            modal.classList.replace('opacity-0', 'opacity-100');
+            box.classList.replace('scale-95', 'scale-100');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('data-modal');
+            const box = document.getElementById('modal-content-box');
+            
+            modal.classList.replace('opacity-100', 'opacity-0');
+            box.classList.replace('scale-100', 'scale-95');
+            
+            // 等待動畫結束後隱藏
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        // Setup Modal Listeners
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-close-footer-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('data-modal').classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTabs();
+            switchScenario('A');
+        });
+    </script>
+</body>
+</html>
